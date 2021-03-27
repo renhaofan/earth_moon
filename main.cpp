@@ -166,11 +166,16 @@ void plotReferenceGrid(float start = 20.0f, float gridSize = 1.0f) {
 }
 void plotEarth() {
 	glPushMatrix();
-	earth_rotation += 0.01f;
-	
+	earth_rotation += 0.1f;
+	earth_revolution += 0.01f;
+
 	if (earth_rotation >= 360) earth_rotation = 0.f;
+	if (earth_revolution >= 360) earth_revolution = 0.f;
+
+	glRotatef(earth_revolution, 0, 1, 0);
+	glTranslatef(50.f, 0.f, 0);
+
 	glRotatef(earth_rotation, 0, 1, 0);
-	
 	glRotatef(90, 1, 0, 0);
 	glBindTexture(GL_TEXTURE_2D, earth_texture);
 	glBegin(GL_QUADS);//绘制四边形
@@ -184,20 +189,18 @@ void plotEarth() {
 
 void plotMoon() {
 	glPushMatrix();
-	moon_rotation += 0.1f;
-	moon_revolution += 0.01f;
+	moon_rotation += 0.4f;
+	moon_revolution += 0.1f;
 
 	if (moon_rotation >= 360) moon_rotation = 0.f;
 	if (moon_revolution >= 360) moon_revolution = 0.f;
 
+	glRotatef(earth_revolution, 0, 1, 0);
+	glTranslatef(50.f, 0.f, 0);
 
 	glRotatef(moon_revolution, 0, 1, 0);
-	glTranslatef(50.f, 0.f, 0);
+	glTranslatef(20.f, 0.f, 0);
 	glRotatef(moon_rotation, 0, 1, 0);
-
-
-
-
 	glRotatef(90, 1, 0, 0);
 	glBindTexture(GL_TEXTURE_2D, moon_texture);
 	glBegin(GL_QUADS);//绘制四边形
@@ -211,12 +214,12 @@ void plotMoon() {
 
 void plotObject() {
 	// plot reference grid
-	if (show_grid) plotReferenceGrid(100.f, 10.f);
+	if (show_grid) plotReferenceGrid(200.f, 10.f);
 	// plot world coordinate axis
 	if (show_axes) plotWorldAxes();
 
 	GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 }; // 定义颜色
-	GLfloat light_pos[] = { 0,0,70,1 };  //定义光源位置
+	GLfloat light_pos[] = { 0,0,0,1 };  //定义光源位置
 	glLightfv(GL_LIGHT0, GL_POSITION, light_pos); //设置第0号光源的光照位置
 	glLightfv(GL_LIGHT0, GL_AMBIENT, white); //设置第0号光源多次反射后的光照颜色（环境光颜色）
 
@@ -561,9 +564,9 @@ void renderScene() {
 
 
 int main(int argc, char ** argv) {
-	camera.LookAt(70, 0, 70,
+	camera.LookAt(0, 150, 0,
 		0, 0, 0,
-		0, 1, 0);
+		0, 0, -1);
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
