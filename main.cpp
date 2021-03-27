@@ -32,6 +32,10 @@
 
 GLCamera camera;
 
+// sun concerned
+float sun_rotation = 0;
+unsigned int sun_texture;
+
 // earth concerned
 float earth_rotation = 0; // day
 float earth_revolution = 0; // year
@@ -53,7 +57,7 @@ float normal_key_speed = 1.f;
 float special_key_speed = 0.3f;
 
 bool show_grid = true;
-bool show_axes = true;
+bool show_axes = false;
 
 // width and height of the window
 int window_height = 800;
@@ -211,6 +215,21 @@ void plotMoon() {
 	glPopMatrix();
 }
 
+void plotSun() {
+	sun_rotation += 0.03f;
+
+	if (sun_rotation >= 360) sun_rotation = 0.f;
+	glPushMatrix();
+	glRotatef(sun_rotation, 0, 1, 0);
+	glRotatef(90, 1, 0, 0);
+	glBindTexture(GL_TEXTURE_2D, sun_texture);
+	glBegin(GL_QUADS);//绘制四边形
+	GLUquadric* quadricObj = gluNewQuadric(); //gluNewQuadric 创建一个新的二次曲面对象
+	gluQuadricTexture(quadricObj, GL_TRUE);
+	gluSphere(quadricObj, 18.f, 18, 36);  //参数1：二次曲面对象指针，参数2：球半径，参数3：Z轴方向片数，经度方向，参数4：Y轴方向片数，维度方向
+	gluDeleteQuadric(quadricObj); //gluDeleteQuadric 删除一个二次曲面对象
+	glPopMatrix();
+}
 
 void plotObject() {
 	// plot reference grid
@@ -224,13 +243,23 @@ void plotObject() {
 	glLightfv(GL_LIGHT0, GL_AMBIENT, white); //设置第0号光源多次反射后的光照颜色（环境光颜色）
 
 
+	GLfloat view_white[] = { 1.0, 1.0, 1.0, 1.0 }; // 定义颜色
+	GLfloat view_light_pos[] = { 10,10,10,1 };  //定义光源位置
+	glLightfv(GL_LIGHT1, GL_POSITION, view_light_pos); //设置第0号光源的光照位置
+	glLightfv(GL_LIGHT1, GL_AMBIENT, view_white); //设置第0号光源多次反射后的光照颜色（环境光颜色）
+
+
 	glEnable(GL_LIGHTING); //开启光照模式
 	glEnable(GL_LIGHT0); //开启第0号光源
-	//glShadeModel(GL_FLAT);
+	glEnable(GL_LIGHT1); 
+	glEnable(GL_TEXTURE_2D);
 	plotMoon();
 	plotEarth();
+	plotSun();
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHT1);
 	glDisable(GL_LIGHTING); 
-	glDisable(GL_LIGHT0); 
 }
 
 void pressNormalKeys(unsigned char key, int x, int y) {
@@ -564,9 +593,9 @@ void renderScene() {
 
 
 int main(int argc, char ** argv) {
-	camera.LookAt(0, 150, 0,
+	camera.LookAt(0, 0, 150,
 		0, 0, 0,
-		0, 0, -1);
+		0, 1, 0);
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
@@ -626,6 +655,28 @@ int main(int argc, char ** argv) {
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
+
+	glGenTextures(1, &sun_texture);
+	glBindTexture(GL_TEXTURE_2D, sun_texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load image, create texture
+	data = stbi_load("images/sun.jpg", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		//glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+
 
 
 
