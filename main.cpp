@@ -15,6 +15,8 @@
 #include <Eigen/SparseCore>
 #include <Eigen/SparseLU>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include <GL/glut.h>
 #include <GL/glu.h>
@@ -26,12 +28,19 @@
 #define RAD2DEG (180.0f / 3.1415926535f)
 
 
-
+// reference:https://github.com/gostepbystep/EarthDemo/blob/master/main.c
 
 GLCamera camera;
 
+// earth concerned
 float earth_rotation = 0; // day
 float earth_revolution = 0; // year
+unsigned int earth_texture;
+
+// moon concerned
+float moon_rotation = 0; // day
+float moon_revolution = 0; // year
+unsigned int moon_texture;
 
 int frame = 0;
 size_t current_time, time_stamp;
@@ -52,7 +61,7 @@ int window_width = 1024;
 int screen_height = glutGet(GLUT_SCREEN_HEIGHT);
 int screen_width = glutGet(GLUT_SCREEN_WIDTH);
 
-int render_way = 1;
+int render_way = 2;
 
 // camera concerned
 float camera_position[3] = { 0.f, 0.f, -10.f };
@@ -157,27 +166,45 @@ void plotReferenceGrid(float start = 20.0f, float gridSize = 1.0f) {
 }
 void plotEarth() {
 	glPushMatrix();
-	earth_rotation += 0.1f;
-	earth_revolution += 0.01f;
+	earth_rotation += 0.01f;
 	
 	if (earth_rotation >= 360) earth_rotation = 0.f;
-	if (earth_revolution >= 360) earth_revolution = 0.f;
-
-
-	glRotatef(earth_revolution, 0, 1, 0);
-	glTranslatef(50.f, 0.f, 0);
 	glRotatef(earth_rotation, 0, 1, 0);
 	
 	glRotatef(90, 1, 0, 0);
-	glutSolidSphere(10.f, 18, 36);
+	glBindTexture(GL_TEXTURE_2D, earth_texture);
+	glBegin(GL_QUADS);//绘制四边形
+	GLUquadric* quadricObj = gluNewQuadric(); //gluNewQuadric 创建一个新的二次曲面对象
+	gluQuadricTexture(quadricObj, GL_TRUE);
+	gluSphere(quadricObj, 10.f, 18, 36);  //参数1：二次曲面对象指针，参数2：球半径，参数3：Z轴方向片数，经度方向，参数4：Y轴方向片数，维度方向
+	gluDeleteQuadric(quadricObj); //gluDeleteQuadric 删除一个二次曲面对象
+	//glutSolidSphere(10.f, 18, 36);
 	glPopMatrix();
 }
 
 void plotMoon() {
 	glPushMatrix();
-	glTranslatef(70.f, 0.f, 0);
+	moon_rotation += 0.1f;
+	moon_revolution += 0.01f;
+
+	if (moon_rotation >= 360) moon_rotation = 0.f;
+	if (moon_revolution >= 360) moon_revolution = 0.f;
+
+
+	glRotatef(moon_revolution, 0, 1, 0);
+	glTranslatef(50.f, 0.f, 0);
+	glRotatef(moon_rotation, 0, 1, 0);
+
+
+
+
 	glRotatef(90, 1, 0, 0);
-	glutSolidSphere(4.f, 18, 36);
+	glBindTexture(GL_TEXTURE_2D, moon_texture);
+	glBegin(GL_QUADS);//绘制四边形
+	GLUquadric* quadricObj = gluNewQuadric(); //gluNewQuadric 创建一个新的二次曲面对象
+	gluQuadricTexture(quadricObj, GL_TRUE);
+	gluSphere(quadricObj, 4.f, 18, 36);  //参数1：二次曲面对象指针，参数2：球半径，参数3：Z轴方向片数，经度方向，参数4：Y轴方向片数，维度方向
+	gluDeleteQuadric(quadricObj); //gluDeleteQuadric 删除一个二次曲面对象
 	glPopMatrix();
 }
 
@@ -189,7 +216,7 @@ void plotObject() {
 	if (show_axes) plotWorldAxes();
 
 	GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 }; // 定义颜色
-	GLfloat light_pos[] = { 0,0,0,1 };  //定义光源位置
+	GLfloat light_pos[] = { 0,0,70,1 };  //定义光源位置
 	glLightfv(GL_LIGHT0, GL_POSITION, light_pos); //设置第0号光源的光照位置
 	glLightfv(GL_LIGHT0, GL_AMBIENT, white); //设置第0号光源多次反射后的光照颜色（环境光颜色）
 
@@ -197,10 +224,10 @@ void plotObject() {
 	glEnable(GL_LIGHTING); //开启光照模式
 	glEnable(GL_LIGHT0); //开启第0号光源
 	//glShadeModel(GL_FLAT);
-	// plotMoon();
+	plotMoon();
 	plotEarth();
-	glDisable(GL_LIGHTING); //开启光照模式
-	glDisable(GL_LIGHT0); //开启第0号光源
+	glDisable(GL_LIGHTING); 
+	glDisable(GL_LIGHT0); 
 }
 
 void pressNormalKeys(unsigned char key, int x, int y) {
@@ -433,7 +460,16 @@ void init() {
 	// OpenGL init
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	// glClearColor(0.0, 0.0, 0.0, 1.0);//设置清除颜色,黑色背景
+	glEnable(GL_TEXTURE_2D);
+	glShadeModel(GL_SMOOTH);
+
+	//glEnable(GL_TEXTURE_2D); 				// 启用纹理映射
+	//glShadeModel(GL_SMOOTH); 				// 启用阴影平滑
+	//glClearColor(0.0f, 0.0f, 0.0f, 0.5f); 	// 黑色背景
+	//glClearDepth(1.0f); 					// 设置深度缓存
+	//glEnable(GL_DEPTH_TEST); 				// 启用深度测试
+	//glDepthFunc(GL_LEQUAL); 				// 所作深度测试的类型
+	//glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // 真正精细的透视修正
 }
 
 void changeSize(int w, int h) {
@@ -525,7 +561,7 @@ void renderScene() {
 
 
 int main(int argc, char ** argv) {
-	camera.LookAt(0, 0, 10,
+	camera.LookAt(70, 0, 70,
 		0, 0, 0,
 		0, 1, 0);
 	glutInit(&argc, argv);
@@ -539,6 +575,65 @@ int main(int argc, char ** argv) {
 	glutReshapeFunc(changeSize);
 	glutIdleFunc(idle);
 	init();
+
+	// load and create a texture 
+// -------------------------
+
+	glGenTextures(1, &earth_texture);
+	glBindTexture(GL_TEXTURE_2D, earth_texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load image, create texture and generate mipmaps
+	int width, height, nrChannels;
+	// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+	//unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("images/earth2048.bmp", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		//glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+
+	glGenTextures(1, &moon_texture);
+	glBindTexture(GL_TEXTURE_2D, moon_texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load image, create texture
+	data = stbi_load("images/moon1024.bmp", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		//glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+
+
+
+
+
+
+
+
+
+
+
 
 	// enter GLUT event processing cycle
 	glutMainLoop();
