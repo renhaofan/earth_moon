@@ -1,6 +1,8 @@
 # earth_moon
 This is simple demo to show earth-moon system.
 
+GLCamera.h depends on [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library.
+
 ![Demo](https://github.com/renhaofan/earth_moon/blob/main/images/demo.png) 
 # KeyBoard Control
 ## Camera
@@ -10,7 +12,7 @@ This is simple demo to show earth-moon system.
 
 <kbd>q</kbd> - camera move up. <kbd>e</kbd> - camera move down
 
-<kbd>←</kbd> and <kbd>←</kbd>rotate around axis v
+<kbd>←</kbd> and <kbd>→</kbd>rotate around axis v
 
 <kbd>↑</kbd>, <kbd>↓</kbd> plotCamera not set.
 ## Scene
