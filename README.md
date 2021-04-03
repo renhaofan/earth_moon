@@ -3,7 +3,7 @@ This is simple demo to show earth-moon system.
 
 GLCamera.h depends on [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library.
 
-![Demo](https://github.com/renhaofan/earth_moon/blob/main/images/solar.png) 
+![Demo](https://github.com/renhaofan/earth_moon/blob/main/images/demo1.gif) 
 # KeyBoard Control
 ## Camera
 <kbd>w</kbd> - camera move forward. <kbd>s</kbd> - camera move backward 
